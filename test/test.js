@@ -15,10 +15,15 @@ uint256 airdropSupply,
 uint256 _claimPeriodEnds
 */
 
+ // token amounts TBD, these numbers are just for testing puropses
+ const supply = 10_000_000
+ const airdropAmount = 2_000_000
+ const timestamp = 1640433346
+
 describe("DD", function () {
   it("Should mint tokens", async function() {
     const DD = await hre.ethers.getContractFactory("DD")
-    const dd = await DD.deploy(10_000_000, 5_000_000, 1640433346)
+    const dd = await DD.deploy(supply, airdropAmount, timestamp)
     await dd.deployed()
 
     const accounts = await hre.ethers.getSigners() 
@@ -40,7 +45,7 @@ describe("DD", function () {
 
   it("Should allow a user to claim tokens", async function() {
     const DD = await hre.ethers.getContractFactory("DD")
-    const dd = await DD.deploy(10_000_000, 5_000_000, 1640433346)
+    const dd = await DD.deploy(supply, airdropAmount, timestamp)
     await dd.deployed()
     const accounts = await hre.ethers.getSigners() 
     const contractAddress = dd.address
@@ -65,7 +70,7 @@ describe("DD", function () {
 
   it("Should not allow someone to mint twicee", async function() {
     const DD = await hre.ethers.getContractFactory("DD")
-    const dd = await DD.deploy(10_000_000, 5_000_000, 1640433346)
+    const dd = await DD.deploy(supply, airdropAmount, timestamp)
     await dd.deployed()
     const accounts = await hre.ethers.getSigners() 
 
@@ -84,7 +89,7 @@ describe("DD", function () {
 
   it("Should allow the treasury to mint", async function() {
     const DD = await hre.ethers.getContractFactory("DD")
-    const dd = await DD.deploy(10_000_000, 5_000_000, 1640433346)
+    const dd = await DD.deploy(supply, airdropAmount, timesamp)
     await dd.deployed()
     const accounts = await hre.ethers.getSigners() 
     const treasury = accounts[0]
