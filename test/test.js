@@ -1,4 +1,4 @@
-const { ethers } = require("hardhat");
+const { ethers } = require("hardhat")
 const { MerkleTree } = require('merkletreejs')
 const keccak256 = require('keccak256')
 
@@ -17,44 +17,86 @@ uint256 _claimPeriodEnds
 
 describe("DD", function () {
   it("Should mint tokens", async function() {
-    console.log(' about to deploy ')
-    const DD = await hre.ethers.getContractFactory("DD");
-    const dd = await DD.deploy(10_000_000, 5_000_000, 1640433346);
+    const DD = await hre.ethers.getContractFactory("DD")
+    const dd = await DD.deploy(10_000_000, 5_000_000, 1640433346)
+    await dd.deployed()
 
-    await dd.deployed();
-    const contractAddress = dd.address
-
-    const accounts = await hre.ethers.getSigners(); 
+    const accounts = await hre.ethers.getSigners() 
     const treasury = accounts[0].address
     console.log('treasury address: ', treasury)
 
+    /* total supply */
     const supply = await dd.totalSupply()
-    console.log('Supply: ', supply.toString())
-    let ethValue = ethers.utils.formatEther(supply);
-    console.log('Formatted supply: ', ethValue)
+    console.log('Supply: ', ethers.utils.formatEther(supply))
+
+    /* treasury balance */
     const balance = await dd.balanceOf(treasury)
     console.log('Treasury balance:', ethers.utils.formatEther(balance))
 
-    // test claim
-    const tester = accounts[1]
-    console.log('tester.address: ', tester.address)
+    /* contract balance */
+    const contractBalance = await dd.balanceOf(dd.address)
+    console.log('Contract balance: ', ethers.utils.formatEther(contractBalance))
+  })
+
+  it("Should allow a user to claim tokens", async function() {
+    const DD = await hre.ethers.getContractFactory("DD")
+    const dd = await DD.deploy(10_000_000, 5_000_000, 1640433346)
+    await dd.deployed()
+    const accounts = await hre.ethers.getSigners() 
+    const contractAddress = dd.address
+  
+    /* test claim */
+    const claimAccount = accounts[1]
     const root = tree.getHexRoot()
     await dd.setMerkleRoot(root)
-    const leaf = keccak256(tester.address)
+    const leaf = keccak256(claimAccount.address)
     const proof = tree.getHexProof(leaf)
     
-    await dd.connect(tester).claimTokens(proof);
+    await dd.connect(claimAccount).claimTokens(proof)
 
-    const claimerBalance = await dd.balanceOf(tester.address)
-    ethValue = ethers.utils.formatEther(claimerBalance);
-    console.log('Claimer balance: ', ethValue)
+    /* Get claimer balance */
+    let claimerBalance = await dd.balanceOf(claimAccount.address)
+    console.log('Claimer balance: ', ethers.utils.formatEther(claimerBalance))
 
     /* log contract supply after first witdrawal */
     const contractBalance = await dd.balanceOf(contractAddress)
-    ethValue = ethers.utils.formatEther(contractBalance);
-    console.log('Contract balance: ', contractBalance.toString())
+    console.log('Contract balance: ', ethers.utils.formatEther(contractBalance))
+  })
+
+  it("Should not allow someone to mint twicee", async function() {
+    const DD = await hre.ethers.getContractFactory("DD")
+    const dd = await DD.deploy(10_000_000, 5_000_000, 1640433346)
+    await dd.deployed()
+    const accounts = await hre.ethers.getSigners() 
+
+    /* test claim */
+    const claimAccount = accounts[1]
+    const root = tree.getHexRoot()
+    await dd.setMerkleRoot(root)
+    const leaf = keccak256(claimAccount.address)
+    const proof = tree.getHexProof(leaf)
+    
+    await dd.connect(claimAccount).claimTokens(proof)
 
     /* try to claim again */
-    await dd.connect(tester).claimTokens(proof);
+    await dd.connect(claimAccount).claimTokens(proof)
   })
-});
+
+  it("Should allow the treasury to mint", async function() {
+    const DD = await hre.ethers.getContractFactory("DD")
+    const dd = await DD.deploy(10_000_000, 5_000_000, 1640433346)
+    await dd.deployed()
+    const accounts = await hre.ethers.getSigners() 
+    const treasury = accounts[0]
+
+    /* treasury balance */
+    const balance = await dd.balanceOf(treasury.address)
+    console.log('Treasury balance:', ethers.utils.formatEther(balance))
+
+    /* mint more tokens */
+    await dd.connect(treasury).mint(1_000_000)
+
+    let treasuryBalance = await dd.balanceOf(treasury.address)
+    console.log('New treasury balance after additional mint: ', ethers.utils.formatEther(treasuryBalance))
+  })
+})
