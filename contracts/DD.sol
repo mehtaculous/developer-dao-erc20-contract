@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 contract DD is ERC20, ERC20Permit, Ownable {
     using BitMaps for BitMaps.BitMap;
     BitMaps.BitMap private claimed;
-    // airdrop amount TBD, this number is just for testing puropses
+    // airdrop amount TBD, this number is just for testing purposes
     uint airdrop_amount = 500 * (10 ** 18);
     bytes32 public merkleRoot;
     uint256 public claimPeriodEnds;

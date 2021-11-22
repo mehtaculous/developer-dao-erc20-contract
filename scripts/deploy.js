@@ -7,6 +7,7 @@ const hre = require("hardhat");
 
 async function main() {
   const DD = await hre.ethers.getContractFactory("DD");
+   // token amounts TBD, these numbers are just for testing puropses
   const dd = await DD.deploy(10_000_000, 5_000_000, 1640433346);
 
   await dd.deployed();

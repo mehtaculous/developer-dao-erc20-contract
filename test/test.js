@@ -15,20 +15,20 @@ uint256 airdropSupply,
 uint256 _claimPeriodEnds
 */
 
- // token amounts TBD, these numbers are just for testing puropses
- const supply = 10_000_000
- const airdropAmount = 2_000_000
+ // token amounts TBD, these numbers are just for testing purposes
+ const tokenSupply = 10000000
+ const airdropAmount = 2000000
  const timestamp = 1640433346
+ const pastTimeStamp = 1611323961
 
-describe("DD", function () {
+describe("Developer DAO ERC20 token contract", function () {
   it("Should mint tokens", async function() {
     const DD = await hre.ethers.getContractFactory("DD")
-    const dd = await DD.deploy(supply, airdropAmount, timestamp)
+    const dd = await DD.deploy(tokenSupply, airdropAmount, timestamp)
     await dd.deployed()
 
-    const accounts = await hre.ethers.getSigners() 
+    const accounts = await hre.ethers.getSigners()
     const treasury = accounts[0].address
-    console.log('treasury address: ', treasury)
 
     /* total supply */
     const supply = await dd.totalSupply()
@@ -45,7 +45,7 @@ describe("DD", function () {
 
   it("Should allow a user to claim tokens", async function() {
     const DD = await hre.ethers.getContractFactory("DD")
-    const dd = await DD.deploy(supply, airdropAmount, timestamp)
+    const dd = await DD.deploy(tokenSupply, airdropAmount, timestamp)
     await dd.deployed()
     const accounts = await hre.ethers.getSigners() 
     const contractAddress = dd.address
@@ -68,9 +68,10 @@ describe("DD", function () {
     console.log('Contract balance: ', ethers.utils.formatEther(contractBalance))
   })
 
-  it("Should not allow someone to mint twicee", async function() {
+  it("Should not allow someone to claim twice", async function() {
+    let error = false
     const DD = await hre.ethers.getContractFactory("DD")
-    const dd = await DD.deploy(supply, airdropAmount, timestamp)
+    const dd = await DD.deploy(tokenSupply, airdropAmount, timestamp)
     await dd.deployed()
     const accounts = await hre.ethers.getSigners() 
 
@@ -83,13 +84,18 @@ describe("DD", function () {
     
     await dd.connect(claimAccount).claimTokens(proof)
 
-    /* try to claim again */
-    await dd.connect(claimAccount).claimTokens(proof)
+    try {
+      /* try to claim again */
+      await dd.connect(claimAccount).claimTokens(proof)
+      error = true
+    } catch (err) {}
+
+    if(error) throw new Error("Should not allow someone to mint twice")  
   })
 
   it("Should allow the treasury to mint", async function() {
     const DD = await hre.ethers.getContractFactory("DD")
-    const dd = await DD.deploy(supply, airdropAmount, timesamp)
+    const dd = await DD.deploy(tokenSupply, airdropAmount, timestamp)
     await dd.deployed()
     const accounts = await hre.ethers.getSigners() 
     const treasury = accounts[0]
@@ -99,9 +105,55 @@ describe("DD", function () {
     console.log('Treasury balance:', ethers.utils.formatEther(balance))
 
     /* mint more tokens */
-    await dd.connect(treasury).mint(1_000_000)
+    await dd.mint(1_000_000)
 
     let treasuryBalance = await dd.balanceOf(treasury.address)
     console.log('New treasury balance after additional mint: ', ethers.utils.formatEther(treasuryBalance))
+  })
+
+  it("Should allow a sweep after the claim period ends", async function() {
+    const DD = await hre.ethers.getContractFactory("DD")
+    const dd = await DD.deploy(tokenSupply, airdropAmount, pastTimeStamp)
+    await dd.deployed()
+    const accounts = await hre.ethers.getSigners() 
+    const treasury = accounts[0]
+
+    await dd.sweep(treasury.address)
+  })
+
+  it("Should not allow a sweep before the claim period ends", async function() {
+    let error = false
+    const DD = await hre.ethers.getContractFactory("DD")
+    const dd = await DD.deploy(tokenSupply, airdropAmount, timestamp)
+    await dd.deployed()
+    const accounts = await hre.ethers.getSigners() 
+    const treasury = accounts[0]
+
+    try {
+      /* try to sweep before claim period */
+      await dd.sweep(treasury.address)
+      error = true
+    } catch (err) {}
+  
+    if(error) throw new Error("Should not allow a sweep before the claim period ends")
+  })
+
+  it("Should not allow a merkle tree to be set twice", async function() {
+    let error = false
+    const DD = await hre.ethers.getContractFactory("DD")
+    const dd = await DD.deploy(tokenSupply, airdropAmount, timestamp)
+    await dd.deployed()
+
+    const root = tree.getHexRoot()
+    await dd.setMerkleRoot(root)
+
+    try {
+      /* try to set merkle root again */
+      await dd.setMerkleRoot(root)
+      error = true
+    } catch (err) {}
+
+    if(error) throw new Error("Merkle root should not be able to be set twice")
+    
   })
 })
