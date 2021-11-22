@@ -47,19 +47,19 @@ describe("Developer DAO Token Contract Testing", function () {
 
     /* total supply */
     const totalSupply = await DevDaoContract.totalSupply()
-	 const expectedSupply = ethers.BigNumber.from(supply+airdropAmount).mul(ethers.BigNumber.from("10").pow(ethers.BigNumber.from("18")));
+	 const expectedSupply = ethers.utils.parseEther((supply+airdropAmount).toString())
 	 expect(totalSupply).to.eq(expectedSupply);
     console.log('Supply: ', ethers.utils.formatEther(totalSupply))
 
     /* treasury balance */
     const treasBalance = await DevDaoContract.balanceOf(treasury.address)
-	 const expectedTreasBalance = ethers.BigNumber.from(supply).mul(ethers.BigNumber.from("10").pow(ethers.BigNumber.from("18")));
+	 const expectedTreasBalance = ethers.utils.parseEther(supply.toString())
 	 expect(treasBalance).to.eq(expectedTreasBalance);
     console.log('Treasury balance:', ethers.utils.formatEther(treasBalance))
 
     /* contract balance */
     const contractBalance = await DevDaoContract.balanceOf(DevDaoContract.address)
-	 const expectedContractBalance = ethers.BigNumber.from(airdropAmount).mul(ethers.BigNumber.from("10").pow(ethers.BigNumber.from("18")));
+	 const expectedContractBalance = ethers.utils.parseEther(airdropAmount.toString())
 	 expect(contractBalance).to.eq(expectedContractBalance);
     console.log('Contract balance: ', ethers.utils.formatEther(contractBalance))
   })
@@ -79,7 +79,7 @@ describe("Developer DAO Token Contract Testing", function () {
     
     await DevDaoContract.connect(claimer1).claimTokens(proof)
 
-	 const airdropPersonalAmount = ethers.BigNumber.from(500).mul(ethers.BigNumber.from("10").pow(ethers.BigNumber.from("18")))
+	 const airdropPersonalAmount = ethers.utils.parseEther("500")
 
     /* Get claimer balance */
     let claimerBalance = await DevDaoContract.balanceOf(claimer1.address)
@@ -90,7 +90,7 @@ describe("Developer DAO Token Contract Testing", function () {
     const contractBalance = await DevDaoContract.balanceOf(DevDaoContract.address)
     console.log('Contract balance: ', ethers.utils.formatEther(contractBalance))
 
-	 const balanceAfterOneDrop = ethers.BigNumber.from(airdropAmount).mul(ethers.BigNumber.from("10").pow(ethers.BigNumber.from("18"))).sub(airdropPersonalAmount);
+	 const balanceAfterOneDrop = ethers.utils.parseEther(airdropAmount.toString()).sub(airdropPersonalAmount);
 	 expect(contractBalance).to.equal(balanceAfterOneDrop);
   })
 
@@ -115,7 +115,7 @@ describe("Developer DAO Token Contract Testing", function () {
 	
 	await DevDaoContract.connect(claimer2).claimTokens(proof)
 
-	const airdropPersonalAmount = ethers.BigNumber.from(500).mul(ethers.BigNumber.from("10").pow(ethers.BigNumber.from("18")))
+	const airdropPersonalAmount = ethers.utils.parseEther("500")
 	const twiceAirdropPersonalAmount = airdropPersonalAmount.mul(2);
 
 	/* Get claimer balance */
@@ -127,7 +127,7 @@ describe("Developer DAO Token Contract Testing", function () {
 	const contractBalance = await DevDaoContract.balanceOf(DevDaoContract.address)
 	console.log('Contract balance: ', ethers.utils.formatEther(contractBalance))
 
-	const balanceAfterTwoDrops = ethers.BigNumber.from(airdropAmount).mul(ethers.BigNumber.from("10").pow(ethers.BigNumber.from("18"))).sub(twiceAirdropPersonalAmount);
+	const balanceAfterTwoDrops = ethers.utils.parseEther(airdropAmount.toString()).sub(twiceAirdropPersonalAmount);
 	expect(contractBalance).to.equal(balanceAfterTwoDrops);
   })
 
@@ -140,8 +140,8 @@ describe("Developer DAO Token Contract Testing", function () {
 
     /* mint more tokens */
     await DevDaoContract.connect(treasury).mint(1_000_000)
-	 const bigNumberMillion = ethers.BigNumber.from("1000000").mul(ethers.BigNumber.from("10").pow(ethers.BigNumber.from("18")))
-	 const expectedValueAfter = balance.add(bigNumberMillion);
+	 const millionEther = ethers.utils.parseEther("1000000")
+	 const expectedValueAfter = balance.add(millionEther);
 	 expect(await DevDaoContract.balanceOf(treasury.address)).to.equal(expectedValueAfter)
 
     let treasuryBalance = await DevDaoContract.balanceOf(treasury.address)
