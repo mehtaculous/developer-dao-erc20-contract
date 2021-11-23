@@ -14,6 +14,7 @@ contract DD is ERC20, ERC20Permit, Ownable {
     uint airdrop_amount = 500 * (10 ** 18);
     bytes32 public merkleRoot;
     uint256 public claimPeriodEnds;
+    bool mintingEnabled = true;
 
     event MerkleRootChanged(bytes32 merkleRoot);
     event Claim(address indexed claimant);
@@ -55,7 +56,12 @@ contract DD is ERC20, ERC20Permit, Ownable {
         _transfer(address(this), dest, balanceOf(address(this)));
     }
 
+    function disableMinting() public onlyOwner {
+        mintingEnabled = false;
+    }
+
     function mint(uint additionalSupply) public onlyOwner {
+        require(mintingEnabled == true, "No new tokens can be minted");
         _mint(msg.sender, additionalSupply * (10 ** 18));
     }
 }

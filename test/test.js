@@ -1,7 +1,7 @@
 const { ethers } = require("hardhat")
 const { MerkleTree } = require('merkletreejs')
 const keccak256 = require('keccak256')
-const { expect } = require("chai")
+const { expect, assert } = require("chai")
 
 /* this is just test data */
 /* snapshot will come from this code https://github.com/Developer-DAO/erc721-snapshot */
@@ -97,18 +97,27 @@ describe("Developer DAO Token Contract Testing", function () {
   })
 
   it("Should not allow someone to mint twice", async function () {
-
+    let error
     const leaf = keccak256(claimer1.address)
     const proof = tree.getHexProof(leaf)
 
-    expect(DevDaoContract.connect(claimer1).claimTokens(proof)).to.be.reverted;
+    try {
+      await DevDaoContract.connect(claimer1).claimTokens(proof)
+      error = true
+    } catch (err) {}
+    if (error) throw new Error("Should not allow someone to mint twice")
   })
 
   it("Should reject a false proof, using claimer1 address for claimer2", async () => {
+    let error
     const leaf = keccak256(claimer1.address)
     const proof = tree.getHexProof(leaf)
 
-    expect(DevDaoContract.connect(claimer2).claimTokens(proof)).to.be.reverted
+    try {
+      await DevDaoContract.connect(claimer2).claimTokens(proof)
+      error = true
+    } catch (err) {}
+    if (error) throw new Error("Should reject a false proof, using claimer1 address for claimer2")
   })
 
   it("Should allow the second account to claim", async () => {
@@ -133,7 +142,6 @@ describe("Developer DAO Token Contract Testing", function () {
     expect(contractBalance).to.equal(balanceAfterTwoDrops);
   })
 
-
   it("Should allow the treasury to mint", async function () {
 
     /* treasury balance */
@@ -148,5 +156,16 @@ describe("Developer DAO Token Contract Testing", function () {
 
     let treasuryBalance = await DevDaoContract.balanceOf(treasury.address)
     console.log('New treasury balance after additional mint: ', ethers.utils.formatEther(treasuryBalance))
+  })
+
+  it("Should not allow the treasury to mint after minting is disabled", async function () {
+    let error
+    await DevDaoContract.connect(treasury).mint(1_000_000)  
+    await DevDaoContract.connect(treasury).disableMinting()  
+    try {
+      await DevDaoContract.connect(treasury).mint(1_000_000)  
+      error = true
+    } catch (err) {}
+    if (error) throw new Error("Should not allow the treasury to mint after minting is disabled")
   })
 })
