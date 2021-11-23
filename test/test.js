@@ -6,10 +6,9 @@ const { expect, assert } = require("chai")
 /* this is just test data */
 /* snapshot will come from this code https://github.com/Developer-DAO/erc721-snapshot */
 const leaves = [
-  "0xB2Ebc9b3a788aFB1E942eD65B59E9E49A1eE500D", "0x5eC5e26D5304EF62310b5bC46A150d15E144e122", "0xcc13187AfEf880894a8832b854eFE9816449BC59", "0x1d69d3CDEbB5c3E2B8b73cC4D49Aa145ecb7950F", "0xDc173B36003a886b3248650206A1fAE7433660A2", "0xcAa3a3c852442F06806170D137248bb21ddb0E1B", "0xd75135B26b1bC182266B2B22108Cc3cEF2c171D5", "0x75448866cEe7A4680dC58FE846446aF71F9f8438", "0xAD0e00593C796665b5B44Dc5410c906e09100a67", "0x7911670881A81F8410d06053d7B3c237cE77b9B4", "0xD02c0b401d1865e87bC4365B0a2621d7d8B78348", "0x786c9Fb9494Cc3c82d5a47A62b4392c7004106ca", "0xCe2F6F6a51F725049d7D56aB11C09A096360398a", "0x03f9bc4648a98CDc61FcA7a177D809edAB2c14fc", "0x27F8602E403B6EA18f8711A7858fa4a94ef3269b", "0xd6AB094FE02B9D2F5bE7F400D9A06717f95daE9E", "0x40F0A3fd9295e2a409F2512Fde438fe6ed8B5ec8", "0xA703B1cB89F50939173a124ba76571369cF69953", "0x184E2D53a04bC87A6b597703eDcD62d768DA1F27", "0xa4A13B3f22BC0e90235e17AE9343B2c7e04e96c8", "0x926b8edBef960305cBcAA839b1019c0a54358f2C", "0x6D95392544846c0cD6CcEc0342F24534d84393e7",
-  "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", "0x70997970C51812dc3A010C7d01b50e0d17dc79C8", "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"
-].map(v => keccak256(v))
-
+  ["0xB2Ebc9b3a788aFB1E942eD65B59E9E49A1eE500D", 300], ["0x5eC5e26D5304EF62310b5bC46A150d15E144e122", 300], ["0xcc13187AfEf880894a8832b854eFE9816449BC59", 300], ["0x1d69d3CDEbB5c3E2B8b73cC4D49Aa145ecb7950F", 300], ["0xDc173B36003a886b3248650206A1fAE7433660A2", 300], ["0xcAa3a3c852442F06806170D137248bb21ddb0E1B", 300], ["0xd75135B26b1bC182266B2B22108Cc3cEF2c171D5", 300], ["0x75448866cEe7A4680dC58FE846446aF71F9f8438", 300], ["0xAD0e00593C796665b5B44Dc5410c906e09100a67", 300], ["0x7911670881A81F8410d06053d7B3c237cE77b9B4", 300], ["0xD02c0b401d1865e87bC4365B0a2621d7d8B78348", 300], ["0x786c9Fb9494Cc3c82d5a47A62b4392c7004106ca", 300], ["0xCe2F6F6a51F725049d7D56aB11C09A096360398a", 300], ["0x03f9bc4648a98CDc61FcA7a177D809edAB2c14fc", 300], ["0x27F8602E403B6EA18f8711A7858fa4a94ef3269b", 300], ["0xd6AB094FE02B9D2F5bE7F400D9A06717f95daE9E", 300], ["0x40F0A3fd9295e2a409F2512Fde438fe6ed8B5ec8", 300], ["0xA703B1cB89F50939173a124ba76571369cF69953", 300], ["0x184E2D53a04bC87A6b597703eDcD62d768DA1F27", 300], ["0xa4A13B3f22BC0e90235e17AE9343B2c7e04e96c8", 300], ["0x926b8edBef960305cBcAA839b1019c0a54358f2C", 300], ["0x6D95392544846c0cD6CcEc0342F24534d84393e7", 300],
+  ["0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266", 300], ["0x70997970C51812dc3A010C7d01b50e0d17dc79C8", 500], ["0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC", 300]
+].map(v => ethers.utils.solidityKeccak256(['address', 'uint256'], [v[0], v[1]]))
 const tree = new MerkleTree(leaves, keccak256, { sort: true })
 
 /*
@@ -76,11 +75,10 @@ describe("Developer DAO Token Contract Testing", function () {
   })
 
   it("Should allow a user to claim tokens", async function () {
-    const leaf = keccak256(claimer1.address)
+    const leaf = ethers.utils.solidityKeccak256(['address', 'uint256'], [claimer1.address, 500])
     const proof = tree.getHexProof(leaf)
 
-    await DevDaoContract.connect(claimer1).claimTokens(proof)
-
+    await DevDaoContract.connect(claimer1).claimTokens(500, proof)
     const airdropPersonalAmount = ethers.utils.parseEther("500")
 
     /* Get claimer balance */
@@ -98,11 +96,11 @@ describe("Developer DAO Token Contract Testing", function () {
 
   it("Should not allow someone to mint twice", async function () {
     let error
-    const leaf = keccak256(claimer1.address)
+    const leaf = ethers.utils.solidityKeccak256(['address', 'uint256'], [claimer1.address, 500])
     const proof = tree.getHexProof(leaf)
 
     try {
-      await DevDaoContract.connect(claimer1).claimTokens(proof)
+      await DevDaoContract.connect(claimer1).claimTokens(500, proof)
       error = true
     } catch (err) {}
     if (error) throw new Error("Should not allow someone to mint twice")
@@ -110,7 +108,7 @@ describe("Developer DAO Token Contract Testing", function () {
 
   it("Should reject a false proof, using claimer1 address for claimer2", async () => {
     let error
-    const leaf = keccak256(claimer1.address)
+    const leaf = ethers.utils.solidityKeccak256(['address', 'uint256'], [claimer1.address, 300])
     const proof = tree.getHexProof(leaf)
 
     try {
@@ -120,14 +118,27 @@ describe("Developer DAO Token Contract Testing", function () {
     if (error) throw new Error("Should reject a false proof, using claimer1 address for claimer2")
   })
 
-  it("Should allow the second account to claim", async () => {
-    const leaf = keccak256(claimer2.address)
+  it("Should not allow the second account to claim a wrong amount of tokens", async () => {
+    let error
+    const leaf = ethers.utils.solidityKeccak256(['address', 'uint256'], [claimer2.address, 800])
     const proof = tree.getHexProof(leaf)
 
-    await DevDaoContract.connect(claimer2).claimTokens(proof)
+    try {
+      await DevDaoContract.connect(claimer2).claimTokens(800, proof)
+      error = true
+    } catch (err) {}
+    if (error) throw new Error("Should reject a false proof, using a wrong amount for claimer2")
+  })
 
-    const airdropPersonalAmount = ethers.utils.parseEther("500")
-    const twiceAirdropPersonalAmount = airdropPersonalAmount.mul(2);
+  it("Should allow the second account to claim the right amount of tokens", async () => {
+    const leaf = ethers.utils.solidityKeccak256(['address', 'uint256'], [claimer2.address, 300])
+    const proof = tree.getHexProof(leaf)
+
+    await DevDaoContract.connect(claimer2).claimTokens(300, proof)
+
+    const airdropPersonalAmount = ethers.utils.parseEther("300")
+    const firstAirdropPersonalAmount = ethers.utils.parseEther("500")
+    const twiceAirdropPersonalAmount = airdropPersonalAmount.add(firstAirdropPersonalAmount);
 
     /* Get claimer balance */
     let claimerBalance = await DevDaoContract.balanceOf(claimer2.address)

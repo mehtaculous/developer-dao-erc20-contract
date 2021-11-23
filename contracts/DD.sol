@@ -34,9 +34,9 @@ contract DD is ERC20, ERC20Permit, Ownable {
         require(!isClaimed(index), "DD: Tokens already claimed.");
         
         claimed.set(index);
-        emit Claim(msg.sender, amount);
+        emit Claim(msg.sender, amount * (10 ** 18));
 
-        _transfer(address(this), msg.sender, amount);
+        _transfer(address(this), msg.sender, amount * (10 ** 18));
     }
 
     function isClaimed(uint256 index) public view returns (bool) {
