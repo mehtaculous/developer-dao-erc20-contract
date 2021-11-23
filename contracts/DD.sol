@@ -10,14 +10,12 @@ import "@openzeppelin/contracts/utils/structs/BitMaps.sol";
 contract DD is ERC20, ERC20Permit, Ownable {
     using BitMaps for BitMaps.BitMap;
     BitMaps.BitMap private claimed;
-    // airdrop amount TBD, this number is just for testing purposes
-    uint airdrop_amount = 500 * (10 ** 18);
     bytes32 public merkleRoot;
     uint256 public claimPeriodEnds;
     bool mintingEnabled = true;
 
     event MerkleRootChanged(bytes32 merkleRoot);
-    event Claim(address indexed claimant);
+    event Claim(address indexed claimant, uint256 amount);
 
     constructor(
         uint256 freeSupply,
@@ -29,16 +27,16 @@ contract DD is ERC20, ERC20Permit, Ownable {
         claimPeriodEnds = _claimPeriodEnds;
     }
 
-    function claimTokens(bytes32[] calldata merkleProof) external {
-        bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
+    function claimTokens(uint256 amount, bytes32[] calldata merkleProof) external {
+        bytes32 leaf = keccak256(abi.encodePacked(msg.sender, amount));
         (bool valid, uint256 index) = MerkleProof.verify(merkleProof, merkleRoot, leaf);
         require(valid, "DD: Valid proof required.");
         require(!isClaimed(index), "DD: Tokens already claimed.");
         
         claimed.set(index);
-        emit Claim(msg.sender);
+        emit Claim(msg.sender, amount);
 
-        _transfer(address(this), msg.sender, airdrop_amount);
+        _transfer(address(this), msg.sender, amount);
     }
 
     function isClaimed(uint256 index) public view returns (bool) {
